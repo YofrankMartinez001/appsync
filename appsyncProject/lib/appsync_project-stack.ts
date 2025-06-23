@@ -1,16 +1,35 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import {Code, AuthorizationType, FieldLogLevel, GraphqlApi, Definition, FunctionRuntime} from 'aws-cdk-lib/aws-appsync'
+import {AttributeType, Table} from 'aws-cdk-lib/aws-dynamodb'
+import path from 'path';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class AppsyncProjectStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const table = new Table(this, 'FurnitureTable',{
+      partitionKey: {name: 'id', type: AttributeType.STRING},
+      tableName: 'FurnitureTable'
+    })
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'AppsyncProjectQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+
+    const api = new GraphqlApi(this, 'myApi', {
+      name: 'FurnitureApi',
+      definition: Definition.fromFile(path.join(__dirname, 'schema.graphql')),
+      authorizationConfig: {
+        defaultAuthorization: {
+          authorizationType: AuthorizationType.API_KEY,
+        },
+      },
+      logConfig: {
+        fieldLogLevel: FieldLogLevel.ALL,
+      },
+      xrayEnabled: true,
+    });
+
+
+    new cdk.CfnOutput(this, 'GraphqlApiUrl', { value: api.graphqlUrl});
   }
 }

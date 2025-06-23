@@ -1,0 +1,25 @@
+type Query {
+    getFurn(id: String!): Furn
+    listFurn: [Furn]
+}
+
+type Mutation {
+    createFurn(input: CreateFurnInput!): Furn
+    updateFurn(input: UpdateFurnInput!): Furn
+    deleteFurn(FurnID: String!): Furn
+}
+
+type Furn{
+    id: ID!
+    name: String!
+}
+
+input CreateFurnInput {
+    id: ID
+    name: String
+}
+
+input UpdateFurnInput {
+    id: ID!
+    name: String
+}
