@@ -29,6 +29,8 @@ export class AppsyncProjectStack extends cdk.Stack {
       xrayEnabled: true,
     });
 
+    api.addDynamoDbDataSource('furnDS', table)
+
 
     new cdk.CfnOutput(this, 'GraphqlApiUrl', { value: api.graphqlUrl});
   }
