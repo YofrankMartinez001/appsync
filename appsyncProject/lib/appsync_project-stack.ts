@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { AuthorizationType, FieldLogLevel, GraphqlApi, Definition, Values, MappingTemplate, PrimaryKey } from 'aws-cdk-lib/aws-appsync'
+import { AuthorizationType, FieldLogLevel, GraphqlApi, Definition, Values, MappingTemplate, PrimaryKey, Code, FunctionRuntime } from 'aws-cdk-lib/aws-appsync'
 import {AttributeType, Table} from 'aws-cdk-lib/aws-dynamodb'
 import path from 'path';
 
@@ -33,7 +33,41 @@ export class AppsyncProjectStack extends cdk.Stack {
     const dataSource = api.addDynamoDbDataSource('furnDS', table)
 
     //resolvers
-    dataSource.createResolver('GetFurnResolver',{
+    dataSource.createResolver('GetFurnResolver', {
+      typeName: 'Query',
+      fieldName: 'getFurn',
+      runtime: FunctionRuntime.JS_1_0_0,
+      code: Code.fromAsset(path.join(__dirname,'jsfunctions/getFurn.js')),
+    });
+
+    dataSource.createResolver('CreateFurnResolver', {
+      typeName: 'Mutation',
+      fieldName: 'createFurn',
+      runtime: FunctionRuntime.JS_1_0_0,
+      code: Code.fromAsset(path.join(__dirname,'jsfunctions/createFurn.js')),
+    });
+    
+    dataSource.createResolver('UpdateFurnResolver', {
+      typeName: 'Mutation',
+      fieldName: 'updateFurn',
+      runtime: FunctionRuntime.JS_1_0_0,
+      code: Code.fromAsset(path.join(__dirname,'jsfunctions/updateFurn.js')),
+    });
+
+    dataSource.createResolver('CreateFurnResolver', {
+      typeName: 'Mutation',
+      fieldName: 'deleteFurn',
+      runtime: FunctionRuntime.JS_1_0_0,
+      code: Code.fromAsset(path.join(__dirname,'jsfunctions/deleteFurn.js')),
+    });
+    
+    new cdk.CfnOutput(this, 'GraphqlApiUrl', { value: api.graphqlUrl});
+  }
+}
+
+   /*
+   resolver used before:
+   dataSource.createResolver('GetFurnResolver',{
       typeName:'Query',
       fieldName:'getFurn',
       requestMappingTemplate: MappingTemplate.dynamoDbGetItem('id', 'id'),
@@ -66,7 +100,4 @@ export class AppsyncProjectStack extends cdk.Stack {
       requestMappingTemplate: MappingTemplate.dynamoDbDeleteItem('id','FurnID'),
       responseMappingTemplate: MappingTemplate.dynamoDbResultItem(),
     });
-
-    new cdk.CfnOutput(this, 'GraphqlApiUrl', { value: api.graphqlUrl});
-  }
-}
+    */
