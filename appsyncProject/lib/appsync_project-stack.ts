@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { AuthorizationType, FieldLogLevel, GraphqlApi, Definition, Values, MappingTemplate, PrimaryKey, Code, FunctionRuntime } from 'aws-cdk-lib/aws-appsync'
 import {AttributeType, Table} from 'aws-cdk-lib/aws-dynamodb'
 import path from 'path';
@@ -10,12 +11,30 @@ export class AppsyncProjectStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    //dynamodb table furnituretable
     const table = new Table(this, 'FurnitureTable',{
       partitionKey: {name: 'id', type: AttributeType.STRING},
       tableName: 'FurnitureTable'
     })
 
+    //cognito user pool and user client
+    const userpool = new UserPool(this, 'FurnitureUserPool', {
+      selfSignUpEnabled: true,
+      signInAliases:{
+        username: true,
+        email: true
+      }
+    })
+    const userpoolclient = userpool.addClient('FurnitureUserPoolClient', {
+      authFlows: {
+        adminUserPassword: true,
+        custom:true,
+        userPassword:true,
+        userSrp:true
+      }
+    })
 
+    //appsync new api
     const api = new GraphqlApi(this, 'myApi', {
       name: 'FurnitureApi',
       definition: Definition.fromFile(path.join(__dirname, 'schema.graphql')),
@@ -30,9 +49,11 @@ export class AppsyncProjectStack extends cdk.Stack {
       xrayEnabled: true,
     });
 
-    const dataSource = api.addDynamoDbDataSource('furnDS', table)
 
     //resolvers
+    
+    const dataSource = api.addDynamoDbDataSource('furnDS', table)
+
     dataSource.createResolver('GetFurnResolver', {
       typeName: 'Query',
       fieldName: 'getFurn',
@@ -54,14 +75,17 @@ export class AppsyncProjectStack extends cdk.Stack {
       code: Code.fromAsset(path.join(__dirname,'jsfunctions/updateFurn.js')),
     });
 
-    dataSource.createResolver('CreateFurnResolver', {
+    dataSource.createResolver('DeleteFurnResolver', {
       typeName: 'Mutation',
       fieldName: 'deleteFurn',
       runtime: FunctionRuntime.JS_1_0_0,
       code: Code.fromAsset(path.join(__dirname,'jsfunctions/deleteFurn.js')),
     });
     
+    //outputs
     new cdk.CfnOutput(this, 'GraphqlApiUrl', { value: api.graphqlUrl});
+    new cdk.CfnOutput(this, 'FurnitureUserPoolID', {value: userpool.userPoolId});
+    new cdk.CfnOutput(this, 'FurnitureUserPoolClientID', {value: userpoolclient.userPoolClientId})
   }
 }
 
