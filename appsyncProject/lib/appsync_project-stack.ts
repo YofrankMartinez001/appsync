@@ -40,7 +40,10 @@ export class AppsyncProjectStack extends cdk.Stack {
       definition: Definition.fromFile(path.join(__dirname, 'schema.graphql')),
       authorizationConfig: {
         defaultAuthorization: {
-          authorizationType: AuthorizationType.API_KEY,
+          authorizationType: AuthorizationType.USER_POOL,
+          userPoolConfig: {
+            userPool: userpool,
+          },
         },
       },
       logConfig: {
